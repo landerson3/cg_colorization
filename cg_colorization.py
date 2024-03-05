@@ -9,7 +9,8 @@ Output an import doc for BCC upload
 
  """
 
-import sys, threading, ftplib, requests, io, time, json, hashlib, re
+import sys, threading, ftplib, requests, io, time, json, hashlib, re, os
+import datetime
 from PIL import Image
 
 def upload_to_ftp(binary, name):
@@ -24,7 +25,7 @@ def upload_to_ftp(binary, name):
 	ftp.cwd('automated_uploads')
 	binary.seek(0)
 	try:
-		ftp.storbinary(f"STOR {name}.png", fp = binary) ## TESTING ONLY
+		ftp.storbinary(f"STOR {name}.png", fp = binary) 
 	except BrokenPipeError:
 		upload_to_ftp(binary, name)
 	return None
@@ -58,8 +59,8 @@ def cleanup_banner_img_name(data):
 	#/is/image/rhis/cat7760026?wid=696&fmt=jpeg&qlt=90,0&op_sharpen=0&resMode=sharp&op_usm=0.6,1.0,5,0&iccEmbed=1
 	#remove everything before the '/'
 	# remove everything after the '?'
-	data = re.sub('.*\/','',data)
-	data = re.sub('\?.*','',data)
+	data = re.sub(r'.*\/','',data)
+	data = re.sub(r'\?.*','',data)
 	return data
 
 def image_exists(img_name: str) -> bool:
@@ -74,25 +75,36 @@ def transfer_file(file_data:tuple) -> None:
 	Take a tuple in the format of (donor_file, recipient_name)
 	and upload to FTP
 	'''
-	originating_name = f"{file_data[0]}"
+	originating_name = file_data[0]
 	# process both RHR and non-RHR
 	original_file = download(originating_name)
 	if original_file == None: 
 		return
-	new_name = f"{file_data[1]}"
+	new_name = file_data[1]
 	output = io.BytesIO()
 	original_file.save(output, format = "PNG")
 	upload_to_ftp(output, new_name)
-			
+
+def setup_import_doc() -> str:
+	'''
+	setup a csv on the desktop w/ the appropriate headers
+	'''
+	time_stamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+	loc = os.path.expanduser(f'~/Desktop/BCC_Import_for_CG_Colorization{time_stamp}.csv')
+	with open(loc,'a') as csv:
+		csv.write('/atg/commerce/catalog/ProductCatalog:category,,,,LOCALE=en_US\nID,colorizable,colorizationFileName,colorizeType\n')
+	return loc
 
 def main():
-	if len(sys.argv) != 2: 
-		print(f'Incorrect arguments. Expected 1 got {len(sys.argv)-1}')
-		return
-	CSV = sys.argv[1]
+	# if len(sys.argv) != 2: 
+	# 	print(f'Incorrect arguments. Expected 1 got {len(sys.argv)-1}')
+	# 	return
+	# CSV = sys.argv[1]
+	CSV = '/Users/landerson2/Desktop/cat160033_CG_Colorization_from_SR.csv'
+	BCC_IMPORT_DOC = setup_import_doc()
 	with open(CSV, 'r') as csv_file:
 		for _ in csv_file.readlines():
-			line = _.split(',')
+			line = _.replace('''"''',"").split(',')
 			if line[0] == 'DISPLAY_NAME': continue
 			# determine if the swatch is in the shown-in copy for the CG
 			# if it's not, continue
@@ -109,4 +121,11 @@ def main():
 				continue
 			colorization_filename = hashlib.shake_128(line[0].encode()).hexdigest(4)
 			recipient_filename = f'{colorization_filename}_cl{line[4]}'
-			transfer_file((donor_image, recipient_filename))
+			while threading.active_count() > 50: continue
+			threading.Thread(target = transfer_file, args = ((donor_image, recipient_filename),)).start()
+			# transfer_file((donor_image, recipient_filename))
+			with open(BCC_IMPORT_DOC, 'a+') as bcc_csv:
+				if line[6] not in bcc_csv:
+					bcc_csv.write(f'{line[6]},true,{colorization_filename},static-color\n')
+
+main()
