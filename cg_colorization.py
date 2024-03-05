@@ -112,11 +112,11 @@ def setup_import_doc() -> str:
 	return loc
 
 def main():
-	# if len(sys.argv) != 2: 
-	# 	print(f'Incorrect arguments. Expected 1 got {len(sys.argv)-1}')
-	# 	return
-	# CSV = sys.argv[1]
-	CSV = '/Users/landerson2/Desktop/cat160033_CG_Colorization_from_SR.csv'
+	if len(sys.argv) != 2: 
+		print(f'Incorrect arguments. Expected 1 got {len(sys.argv)-1}')
+		return
+	CSV = sys.argv[1]
+	# CSV = '/Users/landerson2/Desktop/cat160033_CG_Colorization_from_SR.csv'
 	BCC_IMPORT_DOC = setup_import_doc()
 	catids_added_tobcc_data = []
 	uploaded_files = []
