@@ -13,6 +13,22 @@ import sys, threading, ftplib, requests, io, time, json, hashlib, re, os
 import datetime
 from PIL import Image
 
+def check_file_exists_ftp(name):
+	server = "s7ftp1.scene7.com"
+	user_name = "rhis"
+	password = "G1cO2@Me3N!"
+	try:
+		ftp = ftplib.FTP(host = server, user = user_name, passwd = password)
+	except TimeoutError:
+		time.sleep(15)
+		ftp = ftplib.FTP(host = server, user = user_name, passwd = password)
+	ftp.cwd('automated_uploads')
+	files = ftp.nlst()
+	# ftp.quit()
+	if name+'.png' in files: return True
+	else: return False
+
+
 def upload_to_ftp(binary, name):
 	server = "s7ftp1.scene7.com"
 	user_name = "rhis"
@@ -102,6 +118,8 @@ def main():
 	# CSV = sys.argv[1]
 	CSV = '/Users/landerson2/Desktop/cat160033_CG_Colorization_from_SR.csv'
 	BCC_IMPORT_DOC = setup_import_doc()
+	catids_added_tobcc_data = []
+	uploaded_files = []
 	with open(CSV, 'r') as csv_file:
 		for _ in csv_file.readlines():
 			line = _.replace('''"''',"").split(',')
@@ -121,11 +139,15 @@ def main():
 				continue
 			colorization_filename = hashlib.shake_128(line[0].encode()).hexdigest(4)
 			recipient_filename = f'{colorization_filename}_cl{line[4]}'
+			if recipient_filename in uploaded_files: 
+				continue
 			while threading.active_count() > 50: continue
 			threading.Thread(target = transfer_file, args = ((donor_image, recipient_filename),)).start()
+			uploaded_files.append(recipient_filename)
 			# transfer_file((donor_image, recipient_filename))
-			with open(BCC_IMPORT_DOC, 'a+') as bcc_csv:
-				if line[6] not in bcc_csv:
+			with open(BCC_IMPORT_DOC, 'a') as bcc_csv:
+				if line[6] not in catids_added_tobcc_data:
 					bcc_csv.write(f'{line[6]},true,{colorization_filename},static-color\n')
+					catids_added_tobcc_data.append(line[6])
 
 main()
