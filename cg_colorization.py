@@ -135,7 +135,7 @@ def process_line(line):
 	recipient_filename = f'{colorization_filename}_cl{line[4]}'
 	if recipient_filename in uploaded_files or image_exists(recipient_filename):
 		return
-	while threading.active_count() > 50: continue
+	# while threading.active_count() > 50: continue
 	threading.Thread(target = transfer_file, args = ((donor_image, recipient_filename),)).start()
 	uploaded_files.append(recipient_filename)
 	# transfer_file((donor_image, recipient_filename))
@@ -161,8 +161,8 @@ def main():
 		for _ in csv_file.readlines():
 			
 			line = _.replace('''"''',"").split(',')
+			while threading.active_count() > 25: continue
 			threading.Thread(target = process_line, args = (line,)).start()
-			while threading.active_count() > 50: continue
 			# if line[0] == 'DISPLAY_NAME': continue
 			# # determine if the swatch is in the shown-in copy for the CG
 			# # if it's not, continue
