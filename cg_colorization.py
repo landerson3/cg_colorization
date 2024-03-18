@@ -135,7 +135,7 @@ def process_line(line):
 	recipient_filename = f'{colorization_filename}_cl{line[4]}'
 	if recipient_filename in uploaded_files or image_exists(recipient_filename):
 		return
-	# while threading.active_count() > 50: continue
+	while threading.active_count() > 50: continue
 	threading.Thread(target = transfer_file, args = ((donor_image, recipient_filename),)).start()
 	uploaded_files.append(recipient_filename)
 	# transfer_file((donor_image, recipient_filename))
