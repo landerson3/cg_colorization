@@ -112,7 +112,7 @@ def setup_import_doc() -> str:
 	time_stamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 	loc = os.path.expanduser(f'~/Desktop/BCC_Import_for_CG_Colorization{time_stamp}.csv')
 	with open(loc,'a') as csv:
-		csv.write('/atg/commerce/catalog/ProductCatalog:category,,,,LOCALE=en_US\nID,colorizable,colorizationFileName,colorizeType\n')
+		csv.write('/atg/commerce/catalog/ProductCatalog:category,,,,LOCALE=en_US\nID,colorizable,colorizationFileName,colorizeType,disableDynamicColorization\n')
 	return loc
 
 def process_line(line):
@@ -141,7 +141,7 @@ def process_line(line):
 	# transfer_file((donor_image, recipient_filename))
 	with open(BCC_IMPORT_DOC, 'a') as bcc_csv:
 		if line[6] not in catids_added_tobcc_data:
-			bcc_csv.write(f'{line[6]},true,{colorization_filename},static-color\n')
+			bcc_csv.write(f'{line[6]},true,{colorization_filename},static-color,false\n')
 			catids_added_tobcc_data.append(line[6])
 
 def main():
