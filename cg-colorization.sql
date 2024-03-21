@@ -15,7 +15,7 @@ DCS_CAT_CHLDCAT
 join dcs_category on dcs_category.category_id = DCS_CAT_CHLDCAT.CHILD_CAT_ID
 join rh_category on rh_category.category_id = DCS_CAT_CHLDCAT.CHILD_CAT_ID
 where 
-DCS_CAT_CHLDCAT.category_id in ('cat10180128') -- the parent category for all the CGs you want to update (not grandparent)
+DCS_CAT_CHLDCAT.category_id in ('cat3850006') -- the parent category for all the CGs you want to update (not grandparent)
 and dcs_category.END_DATE is null
 and rh_category.REMOVE_FROM_CATALOG_BROWSE = 0
 order by dcs_category.display_name;
@@ -69,7 +69,7 @@ parent_category,
 listagg(product_id) within group(order by product_id) product_list
 from
 cg_parent_child_prods
-where rn<200
+where rn<50
 group by parent_category;
 
 -- get the matches

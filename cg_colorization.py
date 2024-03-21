@@ -14,6 +14,7 @@ catids_added_tobcc_data = []
 uploaded_files = []
 
 import sys, threading, ftplib, requests, io, time, json, hashlib, re, os
+import time
 import datetime
 from PIL import Image
 
@@ -85,7 +86,11 @@ def cleanup_banner_img_name(data):
 
 def image_exists(img_name: str) -> bool:
 	'''request if the image exists from dynamic Media Classic'''
-	response = requests.get(f'https://media.restorationhardware.com/is/image/rhis/{img_name}?req=exists,json')
+	try:
+		response = requests.get(f'https://media.restorationhardware.com/is/image/rhis/{img_name}?req=exists,json')
+	except:
+		time.sleep(1)
+		return image_exists(img_name)
 	if '"catalogRecord.exists":"0"' in response.text:
 		return False
 	return True
@@ -119,8 +124,12 @@ def process_line(line):
 	if line[0] == 'DISPLAY_NAME': return
 	# determine if the swatch is in the shown-in copy for the CG
 	# if it's not, return
-	if len(line) < 8: return
-	if not line[7].replace('Shown In ',"") in line[5]: return
+	if len(line) < 8: 
+		return
+	finish = line[7].replace('Shown In ',"")
+	finish = re.sub('with .*',"",finish)
+	finish = finish.strip()
+	if not finish in line[5]: return
 	#determine which image to use - it's either the category ID or the cleaned up version of the Banner Main Image
 	banner_main_image = cleanup_banner_img_name(line[8])
 	donor_image = None
@@ -131,9 +140,14 @@ def process_line(line):
 	else:
 		# need to handle neither image existing 
 		return
-	colorization_filename = hashlib.shake_128(line[0].encode()).hexdigest(4)
+	hashable_str = line[0].lower().strip()
+	colorization_filename = hashlib.shake_128(hashable_str.encode()).hexdigest(4)
 	recipient_filename = f'{colorization_filename}_cl{line[4]}'
-	if recipient_filename in uploaded_files or image_exists(recipient_filename):
+	if recipient_filename in uploaded_files or image_exists(recipient_filename): # overwrites?
+		with open(BCC_IMPORT_DOC, 'a') as bcc_csv:
+			if line[6] not in catids_added_tobcc_data:
+				bcc_csv.write(f'{line[6]},true,{colorization_filename},static-color,false\n')
+				catids_added_tobcc_data.append(line[6])
 		return
 	# while threading.active_count() > 50: continue
 	threading.Thread(target = transfer_file, args = ((donor_image, recipient_filename),)).start()
@@ -153,7 +167,7 @@ def main():
 		print(f'Incorrect arguments. Expected 1 got {len(sys.argv)-1}')
 		return
 	CSV = sys.argv[1]
-	# CSV = '/Users/landerson2/Desktop/total_site_static_color.csv'
+	# CSV = '/Users/landerson2/Desktop/cg_col.csv'
 	BCC_IMPORT_DOC = setup_import_doc()
 	catids_added_tobcc_data = []
 	uploaded_files = []
@@ -161,8 +175,12 @@ def main():
 		for _ in csv_file.readlines():
 			
 			line = _.replace('''"''',"").split(',')
-			while threading.active_count() > 25: continue
+			while threading.active_count() > 50: continue
+			# process_line(line)
 			threading.Thread(target = process_line, args = (line,)).start()
+			
+			
+			
 			# if line[0] == 'DISPLAY_NAME': continue
 			# # determine if the swatch is in the shown-in copy for the CG
 			# # if it's not, continue
