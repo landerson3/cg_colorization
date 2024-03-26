@@ -163,11 +163,11 @@ def main():
 	global BCC_IMPORT_DOC
 	global catids_added_tobcc_data
 	global uploaded_files
-	if len(sys.argv) != 2: 
-		print(f'Incorrect arguments. Expected 1 got {len(sys.argv)-1}')
-		return
-	CSV = sys.argv[1]
-	# CSV = '/Users/landerson2/Desktop/cg_col.csv'
+	# if len(sys.argv) != 2: 
+	# 	print(f'Incorrect arguments. Expected 1 got {len(sys.argv)-1}')
+	# 	return
+	# CSV = sys.argv[1]
+	CSV = '/Users/landerson2/Desktop/cg_col.csv'
 	BCC_IMPORT_DOC = setup_import_doc()
 	catids_added_tobcc_data = []
 	uploaded_files = []
@@ -178,6 +178,8 @@ def main():
 			while threading.active_count() > 50: continue
 			# process_line(line)
 			threading.Thread(target = process_line, args = (line,)).start()
+		for thd in threading.enumerate(): 
+			if not thd == threading.main_thread():thd.join()
 			
 			
 			
