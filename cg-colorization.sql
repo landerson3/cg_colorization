@@ -15,7 +15,7 @@ DCS_CAT_CHLDCAT
 join dcs_category on dcs_category.category_id = DCS_CAT_CHLDCAT.CHILD_CAT_ID
 join rh_category on rh_category.category_id = DCS_CAT_CHLDCAT.CHILD_CAT_ID
 where 
-DCS_CAT_CHLDCAT.category_id in ('cat3860030') -- the parent category for all the CGs you want to update (not grandparent)
+DCS_CAT_CHLDCAT.category_id in ('cat15790016')
 and dcs_category.END_DATE is null
 and rh_category.REMOVE_FROM_CATALOG_BROWSE = 0
 order by dcs_category.display_name;

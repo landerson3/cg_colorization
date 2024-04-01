@@ -140,6 +140,7 @@ def process_line(line):
 	else:
 		# need to handle neither image existing 
 		return
+	
 	hashable_str = line[0].lower().strip()
 	colorization_filename = hashlib.shake_128(hashable_str.encode()).hexdigest(4)
 	recipient_filename = f'{colorization_filename}_cl{line[4]}'
@@ -149,13 +150,12 @@ def process_line(line):
 				bcc_csv.write(f'{line[6]},true,{colorization_filename},static-color,false\n')
 				catids_added_tobcc_data.append(line[6])
 		return
-	# while threading.active_count() > 50: continue
-	threading.Thread(target = transfer_file, args = ((donor_image, recipient_filename),)).start()
+	# threading.Thread(target = transfer_file, args = ((donor_image, recipient_filename),)).start()
 	uploaded_files.append(recipient_filename)
 	# transfer_file((donor_image, recipient_filename))
 	with open(BCC_IMPORT_DOC, 'a') as bcc_csv:
 		if line[6] not in catids_added_tobcc_data:
-			bcc_csv.write(f'{line[6]},true,{colorization_filename},static-color,false\n')
+			bcc_csv.write(f'{line[6]},true,{colorization_filename},static-color,False\n')
 			catids_added_tobcc_data.append(line[6])
 
 def main():
@@ -163,11 +163,11 @@ def main():
 	global BCC_IMPORT_DOC
 	global catids_added_tobcc_data
 	global uploaded_files
-	# if len(sys.argv) != 2: 
-	# 	print(f'Incorrect arguments. Expected 1 got {len(sys.argv)-1}')
-	# 	return
-	# CSV = sys.argv[1]
-	CSV = '/Users/landerson2/Desktop/cg_col.csv'
+	if len(sys.argv) != 2: 
+		print(f'Incorrect arguments. Expected 1 got {len(sys.argv)-1}')
+		return
+	CSV = sys.argv[1]
+	# CSV = '/Users/landerson2/Desktop/cg_col.csv'
 	BCC_IMPORT_DOC = setup_import_doc()
 	catids_added_tobcc_data = []
 	uploaded_files = []
@@ -175,40 +175,13 @@ def main():
 		for _ in csv_file.readlines():
 			
 			line = _.replace('''"''',"").split(',')
-			while threading.active_count() > 50: continue
+			while threading.active_count() > 500: 
+				continue
 			# process_line(line)
 			threading.Thread(target = process_line, args = (line,)).start()
-		for thd in threading.enumerate(): 
+		for thd in threading.enumerate():
 			if not thd == threading.main_thread():thd.join()
 			
 			
 			
-			# if line[0] == 'DISPLAY_NAME': continue
-			# # determine if the swatch is in the shown-in copy for the CG
-			# # if it's not, continue
-			# if len(line) < 8: continue
-			# if not line[7].replace('Shown In ',"") in line[5]: continue
-			# #determine which image to use - it's either the category ID or the cleaned up version of the Banner Main Image
-			# banner_main_image = cleanup_banner_img_name(line[8])
-			# donor_image = None
-			# if banner_main_image != '' and image_exists(banner_main_image):
-			# 	donor_image = banner_main_image
-			# elif image_exists(line[6]):
-			# 	donor_image = line[6]
-			# else:
-			# 	# need to handle neither image existing 
-			# 	continue
-			# colorization_filename = hashlib.shake_128(line[0].encode()).hexdigest(4)
-			# recipient_filename = f'{colorization_filename}_cl{line[4]}'
-			# if recipient_filename in uploaded_files or image_exists(recipient_filename):
-			# 	continue
-			# while threading.active_count() > 50: continue
-			# threading.Thread(target = transfer_file, args = ((donor_image, recipient_filename),)).start()
-			# uploaded_files.append(recipient_filename)
-			# # transfer_file((donor_image, recipient_filename))
-			# with open(BCC_IMPORT_DOC, 'a') as bcc_csv:
-			# 	if line[6] not in catids_added_tobcc_data:
-			# 		bcc_csv.write(f'{line[6]},true,{colorization_filename},static-color\n')
-			# 		catids_added_tobcc_data.append(line[6])
-
 main()
