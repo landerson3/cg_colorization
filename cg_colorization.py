@@ -126,10 +126,10 @@ def process_line(line):
 	# if it's not, return
 	if len(line) < 8: 
 		return
-	finish = line[7].replace('Shown In ',"")
+	finish = line[7].lower().replace('shown in ',"")
 	finish = re.sub('with .*',"",finish)
 	finish = finish.strip()
-	if not finish in line[5]: return
+	if not finish in line[5].lower(): return
 	#determine which image to use - it's either the category ID or the cleaned up version of the Banner Main Image
 	banner_main_image = cleanup_banner_img_name(line[8])
 	donor_image = None
@@ -163,11 +163,11 @@ def main():
 	global BCC_IMPORT_DOC
 	global catids_added_tobcc_data
 	global uploaded_files
-	# if len(sys.argv) != 2: 
-	# 	print(f'Incorrect arguments. Expected 1 got {len(sys.argv)-1}')
-	# 	return
-	# CSV = sys.argv[1]
-	CSV = '/Users/landerson2/Desktop/cg_col.csv'
+	if len(sys.argv) != 2: 
+		print(f'Incorrect arguments. Expected 1 got {len(sys.argv)-1}')
+		return
+	CSV = sys.argv[1]
+	# CSV = '/Users/wipbuilder/Desktop/outdoor_dining_cgc.csv'
 	BCC_IMPORT_DOC = setup_import_doc()
 	catids_added_tobcc_data = []
 	uploaded_files = []
